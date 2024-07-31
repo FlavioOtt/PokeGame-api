@@ -1,5 +1,4 @@
 const pokeModel = require("../model/pokeModel");
-const mysql = require("../model/mysqlConnect");
 const axios = require("axios");
 
 const url_api = require("../config").pokeApi;
@@ -13,6 +12,5 @@ exports.get = async (name) => {
         url: url+name
     })
 
-    return res.data;
+    return await pokeModel.formatPokeData(res.data);
 }
-
