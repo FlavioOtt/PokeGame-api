@@ -30,7 +30,7 @@ async function formatPokeMoves(moves_){
             
                     if (res[infos].name){
                         
-                        await moves.push([
+                        await moves.push(
                             {
                                 id: attack.id,
                                 name: attack.name, 
@@ -40,9 +40,9 @@ async function formatPokeMoves(moves_){
                                 level_learned_at: version_group_details.level_learned_at,
                                 move_learn_method: version_group_details.move_learn_method.name,
                                 damage_relations: type_data.data.damage_relations,
-                                contest_combos: res.contest_combos
+                                contest_combos: res.data.contest_combos
                             }
-                        ]);
+                        );
 
                     }
             
