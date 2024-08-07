@@ -2,38 +2,46 @@ const mysql = require("./mysqlConnect");
 const jwt = require("jsonwebtoken");
 
 const {
-    TOKEN_EMAIL_CHECKER,
     KEY_TOKEN
 } = process.env;
 
 login = async (data) => {
     let res = await mysql.query(`
-        SELECT id_peaple,cargo,funcao,
+        SELECT id_account,email,password,account_type,premium_day,premium_start_at,register_at,
             (
-                SELECT senha FROM user
-                WHERE peaple_id_peaple = p.id_peaple AND senha = '${data.senha}'
-            ) AS senha
-        FROM peaple p JOIN user u WHERE cargo = '${data.cargo}';
+                SELECT list FROM pokemons_list
+                WHERE account_id_account = a.id_account
+            ) AS pokemons_list
+        FROM accounts a JOIN pokemons_list pl WHERE email='${data.email}';
     `)
+    
     if (Array.isArray(res)){
         if (res.length > 0){
 
             res = res[0];
-            console.log(res);
-            if (data.cargo === res.cargo && data.senha === res.senha){
+            
+            if (data.email === res.email && data.password === res.password){
 
-                let token = await jwt.sign({"cargo": res.cargo, "id_peaple": res.id_peaple}, "Q0lNT0w=", {
-                    expiresIn: 600
-                });
+                let token = await jwt.sign(
+                    { 
+                        "email": res.email, 
+                        "id_account": res.id_account,
+                    }, 
+                    KEY_TOKEN
+                );
 
                 return {
                     "auth": true, 
                     "message": "Login realizado com sucesso.",
                     "user": {
-                        "cargo": res.cargo,
-                        "funcao": res.funcao,
-                        "id_peaple": res.id_peaple,
-                        "token": token
+                        "token": token,
+                        "id_account": res.id_account,
+                        "email": res.email,
+                        "pokemons_list": res.pokemons_list,
+                        "premium_days": res.premium_day,
+                        "register_at": res.register_at,
+                        "premium_start_at": res.premium_start_at,
+                        "account_type": res.account_type
                     }                    
                 }
 
@@ -64,12 +72,12 @@ verifyJWT = async (token) => {
         resp = { "auth": false, "message": 'Token não informado.' }; 
     }
     
-    jwt.verify(token, 'Q0lNT0w=', function(err, decoded) { 
+    jwt.verify(token, KEY_TOKEN, function(err, decoded) { 
         if (err){
             resp = { "auth": false, "message": 'Token inválido!' };
         }
         if (decoded){
-            resp = { "auth": true, "id_peaple": decoded.id_peaple, "login": decoded.login};
+            resp = { "auth": true, "id_account": decoded.id_account, "email": decoded.email};
         }
     });
     return resp;
@@ -105,7 +113,19 @@ register = async (body) => {
                         "Premium",
                         "${register_at}",
                         "3"
-                    ); SELECT LAST_INSERT_ID() AS id_account;
+                    ); 
+                    SELECT LAST_INSERT_ID() AS id_account;
+                    INSERT INTO pokemons_list (
+                        list,
+                        account_id_account,
+                        last_list,
+                        last_update_at
+                    ) VALUES(
+                        '${JSON.stringify({})}',
+                        LAST_INSERT_ID(),
+                        '${JSON.stringify({})}',
+                        '${new Date().toLocaleDateString("pt-br")}'
+                    );
                 `);              
 
                 let token = await jwt.sign(
