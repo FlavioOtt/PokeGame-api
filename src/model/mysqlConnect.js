@@ -7,8 +7,7 @@ const {
     DB_PORT,
     DB_USER_PASS,
     DB_DATABASE
-  
-} = process.env
+} = process.env;
 
 async function connect(){
     if (global.connection && global.connection.state !== "disconnected")

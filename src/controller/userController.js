@@ -7,7 +7,11 @@ exports.get = async (header) => {
 }
 
 exports.login = async (headers) => {
-    return userModel.login(headers);
+    return await userModel.login(headers);
+}
+
+exports.register = async (body) => {
+    return await userModel.register(body);
 }
 
 exports.verifyToken = async (token) => {

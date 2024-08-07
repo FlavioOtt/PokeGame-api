@@ -47,14 +47,8 @@ async function formatPokeData(data_){
         height: data_.height,
         stats: stats,
         cry: data_.cries.legacy,
-        evolutions: [
-            ["de", "para", 0/*lvl necessario*/],
-            ["de", "para", 0/*lvl necessario*/]
-        ],
         moves: movesData
     }
-    
-    console.log(formatedPokeData);
 
     return formatedPokeData;
 
