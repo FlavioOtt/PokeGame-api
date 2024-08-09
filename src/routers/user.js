@@ -8,6 +8,8 @@ userRouter.get('/', async(req, res, next) => {
 })
     
 userRouter.post('/register', async(req, res, next) => {
+    console.log(req.body);
+    
     user = await userController.register(req.body);
     res.status(200).send(user);
 })
@@ -18,7 +20,7 @@ userRouter.get('/login', async(req, res, next) => {
 })
 
 userRouter.get('/verifytoken', async(req, res, next) => {
-    user = await userController.verifyToken(req.headers.token);
+    user = await userController.verifyToken(req.headers.token,req.headers.token_login);
     res.status(200).send(user);
 })
 

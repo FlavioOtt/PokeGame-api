@@ -1,3 +1,4 @@
+const bcrypt = require("bcrypt");
 const mysql = require("./mysqlConnect");
 const jwt = require("jsonwebtoken");
 
@@ -6,6 +7,7 @@ const {
 } = process.env;
 
 login = async (data) => {
+
     let res = await mysql.query(`
         SELECT id_account,email,password,account_type,premium_day,premium_start_at,register_at,
             (
@@ -17,15 +19,30 @@ login = async (data) => {
     
     if (Array.isArray(res)){
         if (res.length > 0){
-
-            res = res[0];
             
-            if (data.email === res.email && data.password === res.password){
+            res = res[0];          
+            
+            if (data.email === res.email){
+
+                let token_login = await jwt.sign(
+                    {  
+                        "id_account": res.id_account,
+                        "email": res.email,
+                        "pokemons_list": res.pokemons_list,
+                        "premium_days": res.premium_day,
+                        "register_at": res.register_at,
+                        "premium_start_at": res.premium_start_at,
+                        "account_type": res.account_type
+                    }, 
+                    KEY_TOKEN, {
+                        expiresIn: 1
+                    }
+                );
 
                 let token = await jwt.sign(
-                    { 
-                        "email": res.email, 
+                    {  
                         "id_account": res.id_account,
+                        "email": res.email
                     }, 
                     KEY_TOKEN
                 );
@@ -35,13 +52,8 @@ login = async (data) => {
                     "message": "Login realizado com sucesso.",
                     "user": {
                         "token": token,
-                        "id_account": res.id_account,
-                        "email": res.email,
-                        "pokemons_list": res.pokemons_list,
-                        "premium_days": res.premium_day,
-                        "register_at": res.register_at,
-                        "premium_start_at": res.premium_start_at,
-                        "account_type": res.account_type
+                        "token_login": token_login,
+                        "password": res.password
                     }                    
                 }
 
@@ -67,23 +79,40 @@ login = async (data) => {
     }
 }
 
-verifyJWT = async (token) => { 
-    if (!token){
+verifyJWT = async (token,token_login) => { 
+    
+    if (token_login)
+        login = await jwt.verify(token_login, KEY_TOKEN, (err, decoded) => data = decoded );
+
+    if (!token)
         resp = { "auth": false, "message": 'Token não informado.' }; 
-    }
+    
+    if (!login)
+        resp = { "auth": false, "message": 'Credenciais incorretas' }; 
     
     jwt.verify(token, KEY_TOKEN, function(err, decoded) { 
-        if (err){
+
+        if (err)
             resp = { "auth": false, "message": 'Token inválido!' };
-        }
+        
         if (decoded){
-            resp = { "auth": true, "id_account": decoded.id_account, "email": decoded.email};
+            if (!data)
+                resp = {  
+                    "id_account": decoded.id_account,
+                    "email": decoded.email
+                };
+            else
+                resp = { "auth": true, "data": data, "email": decoded.email};
         }
+        
     });
+    
     return resp;
 }
 
 register = async (body) => {
+    console.log(body);
+    
     
     if (body){
         if (body.email && typeof(body.email) == "string")
@@ -96,7 +125,7 @@ register = async (body) => {
                 `);
 
                 if (res && res.length > 0)
-                    return { message: "Email já cadastrado", data: {}, status: 400, error: true };
+                    return { auth: false, message: "Email já cadastrado", data: {} };
 
                 let acc = await mysql.query(`
                     INSERT INTO accounts (
@@ -137,6 +166,7 @@ register = async (body) => {
                 );
 
                 return { 
+                    auth: true,
                     message: "Cadastro realizado", 
                     data: {
                         "email": body.email,
@@ -145,13 +175,13 @@ register = async (body) => {
                         "register_at": register_at,
                         "premium_start_at": register_at,
                         "token": token
-                    }, 
-                    status: 200, 
-                    error: false 
+                    }
                 }; 
 
             }
     }
+
+    return { auth: false, message: "Erro inesperado, contate o desenvolvedor.", data: {} };
 }
 
 module.exports = { login, verifyJWT, register }

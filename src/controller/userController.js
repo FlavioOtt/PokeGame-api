@@ -14,6 +14,6 @@ exports.register = async (body) => {
     return await userModel.register(body);
 }
 
-exports.verifyToken = async (token) => {
-    return userModel.verifyJWT(token);
+exports.verifyToken = async (token,token_login) => {
+    return userModel.verifyJWT(token,token_login);
 }
