@@ -1,18 +1,10 @@
 const mysql = require("./mysqlConnect");
 const movesModel = require("./movesModel");
+const { default: axios } = require("axios");
 
 async function formatPokeData(data_){
-    
-    let data = [];
 
     let movesData = await movesModel.formatPokeMoves(data_.moves);
-
-    for (index in data_){
-        
-        if (index == 'name'){
-            data.push()
-        }
-    }
 
     let images = {
         back_default: data_.sprites.back_default, 
@@ -54,6 +46,55 @@ async function formatPokeData(data_){
 
 }
 
+async function givePokeTo(id_poke,id_account){
+    if ((id_poke && parseInt(id_poke)) && (id_account && parseInt(id_account))){
+        
+        let poke_data = await axios.get(`https://pokeapi.co/api/v2/pokemon/${parseInt(id_poke)}`);
+
+        if (poke_data != "Not Found"){
+            
+            let poke_data_format = await formatPokeData(poke_data.data);
+
+            let res = await mysql.query(`SELECT * FROM pokemons_list WHERE account_id_account=${parseInt(id_account)}`);
+
+            if (res){
+               
+                let list = JSON.parse(res[0].list);
+                
+                let newLastList = await list;
+
+                await list.push(poke_data_format);
+
+                let newList = await JSON.stringify(list);
+
+                let suc = await mysql.query(
+                    `
+                        UPDATE pokemons_list SET 
+                            list='${newList}', 
+                            last_list='${JSON.stringify(newLastList)}'
+                        WHERE 
+                            account_id_account = ${parseInt(id_account)}
+                    `
+                )
+
+                if (suc.changedRows > 0)
+                    resp = { auth: true, message: "Pokemon adicionado", data: poke_data_format }
+                else
+                    resp = { auth: false, message: "Erro, contate o desenvolvedor" }
+                
+            }else{
+                resp = { auth: false, message: "Erro, contate o desenvolvedor" }
+            }
+
+        }else
+            resp = { auth: false, message: "Pokemon não encontrado" }
+
+    }else
+        resp = { auth: false, message: "Erro, dados informados incorretamente" }
+
+    return resp;
+}
+
 async function getPokeEvolution(chainId){
     if (chainId && typeof(chainId) == "number"){
 
@@ -65,4 +106,4 @@ async function getPokeEvolution(chainId){
     }
 }
 
-module.exports = { formatPokeData }
+module.exports = { formatPokeData, givePokeTo }

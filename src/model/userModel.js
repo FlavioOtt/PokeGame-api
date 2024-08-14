@@ -91,13 +91,14 @@ verifyJWT = async (token,token_login) => {
         resp = { "auth": false, "message": 'Credenciais incorretas' }; 
     
     jwt.verify(token, KEY_TOKEN, function(err, decoded) { 
-
+        
         if (err)
             resp = { "auth": false, "message": 'Token inválido!' };
         
         if (decoded){
-            if (!data)
-                resp = {  
+            if (!token_login)
+                resp = { 
+                    "auth": true,
                     "id_account": decoded.id_account,
                     "email": decoded.email
                 };
@@ -184,11 +185,14 @@ register = async (body) => {
     return { auth: false, message: "Erro inesperado, contate o desenvolvedor.", data: {} };
 }
 
-module.exports = { login, verifyJWT, register }
+myPokes = async (id_account) => {
+    if (id_account && parseInt(id_account)){
 
-/*
-let check_email = await axios({
-    method: "get",
-    url: `https://emailvalidation.abstractapi.com/v1/?api_key=${TOKEN_EMAIL_CHECKER}&email=${body.email}`
-})
-*/
+        let pokemons = await mysql.query(`SELECT list from pokemons_list WHERE account_id_account = ${parseInt(id_account)}`);
+        
+        return pokemons[0].list;
+
+    }
+}
+
+module.exports = { login, verifyJWT, register, myPokes }

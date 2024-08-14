@@ -24,4 +24,12 @@ userRouter.get('/verifytoken', async(req, res, next) => {
     res.status(200).send(user);
 })
 
+userRouter.get("/mypokes", async (req, res, next) => {
+    if (req.headers["x-access-control"]){
+        if (req.headers["x-access-control"] === process.env.TOKEN_API)
+        user = await userController.myPokes(req.headers["x-access-user"]);
+        res.status(200).send(user);
+    }
+})
+
 module.exports = userRouter;

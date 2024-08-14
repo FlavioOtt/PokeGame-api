@@ -20,4 +20,3 @@ app.use("/user", user);
 app.use("/pokemon", poke);
 
 module.exports = app;
-
